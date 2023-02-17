@@ -1,0 +1,42 @@
+version: '3'
+networks:
+    mask_det:
+        driver: bridge
+
+services:
+    mask_det_cpu:
+        image: 10.110.63.67/iai/mask_det:v1.0-cpu
+        restart: always
+        ports:
+            - "10070:8018"
+        networks:
+            - "mask_det"
+        environment:
+            - DEVICE=cpu
+            - CONF_THRES=0.7
+            - IOU_THRES=0.5
+            - FONT_COLOR=[255,255,255]
+            - COLOR_MAP={"default":[255,0,0], "NoMask":[0,0,255],"Mask":[0,255,0]}
+            - LABEL_MAP={"NoMask":"未带口罩", "Mask":"戴口罩"}
+            - MAX_INTERVAL=7200
+            - IS_CONSUMER_OPEN=True
+            - ALGORITHM_NAME=Mask_Detection_cpu
+            - IS_TRACK=True
+            - SCHEDULE_HOST=10.110.63.23
+            - SCHEDULE_PORT=11011
+            - ZK_ROOT=/task_infer
+            - REDIS_HOST=10.110.63.23
+            - REDIS_PORT=6379
+            - REDIS_USER=
+            - REDIS_PASSWD=redis!23
+            - RABBITMQ_HOST=10.110.63.23
+            - RABBITMQ_PORT=5672
+            - RABBITMQ_USER=rabbitmq
+            - RABBITMQ_PASSWD=rabbitmq!23
+            - MINIO_HOST=10.110.63.23
+            - MINIO_PORT=9004
+            - MINIO_USER=minio
+            - MINIO_PASSWD=minio!23
+            - ZOOKEEPER_HOST=10.110.63.23
+            - ZOOKEEPER_PORT=2181
+            - ZOOKEEPER_TIMEOUT=5

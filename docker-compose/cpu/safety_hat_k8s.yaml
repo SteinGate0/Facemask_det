@@ -1,0 +1,128 @@
+# apiVersion: v1
+# kind: Namespace
+# metadata:
+#   name: ecp
+
+# ---
+
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: #secret_name
+#   namespace: ecp
+# data:
+#   server: #harbor
+#   username: #
+#   password: #
+# type: Opaque
+
+# ---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ecp-inference-safety-hat-det
+  namespace: ecp
+  labels:
+    inferjob: ecp-inference-safety-hat-det
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      inferjob: ecp-inference-safety-hat-det
+  template:
+    metadata:
+      labels:
+        inferjob: ecp-inference-safety-hat-det
+      name: ecp-inference-safety-hat-det
+    spec:
+      volumes:
+      - name: host-time
+        hostPath:
+          path: /etc/localtime
+      containers:
+      - image: 10.110.63.25/iai/safetyhat_det:v2.0-cpu
+        imagePullPolicy: Always
+        name: ecp-inference-safety-hat-det
+        ports:
+        - containerPort: 8018
+        env:
+        - name: DEVICE
+          value: 'cpu'
+        - name: CONF_THRES
+          value: '0.7'
+        - name: IOU_THRES
+          value: '0.5'
+        - name: FONT_COLOR
+          value: '[255,255,255]'
+        - name: COLOR_MAP
+          value: '{"default":[255,0,0], "person":[255,0,0], "helmet":[255,0,0], "head":[0,0,255]}'
+        - name: LABEL_MAP
+          value: '{"person":"人", "helmet":"已戴安全帽", "head":"未戴安全帽"}'
+        - name: IS_CONSUMER_OPEN
+          value: 'True'
+        - name: ALGORITHM_NAME
+          value: 'SafetyHat_Detection_cpu'
+        - name: IS_TRACK
+          value: 'False'
+        - name: ZK_ROOT
+          value: '/task_infer'
+        - name: SCHEDULE_HOST
+          value: '10.110.63.24'
+        - name: SCHEDULE_PORT
+          value: '11011'
+        - name: REDIS_HOST
+          value: '10.110.63.24'
+        - name: REDIS_PORT
+          value: '6379'
+        - name: REDIS_USER
+          value: ''
+        - name: REDIS_PASSWD
+          value: ''
+        - name: RABBITMQ_HOST
+          value: '10.110.63.24'
+        - name: RABBITMQ_PORT
+          value: '5672'
+        - name: RABBITMQ_USER
+          value: 'rabbitmq'
+        - name: RABBITMQ_PASSWD
+          value: 'rabbitmq'
+        - name: MINIO_HOST
+          value: '10.110.63.24'
+        - name: MINIO_PORT
+          value: '9004'
+        - name: MINIO_USER
+          value: 'minio'
+        - name: MINIO_PASSWD
+          value: 'minio123'
+        - name: ZOOKEEPER_HOST
+          value: '192.168.12.3'
+        - name: ZOOKEEPER_PORT
+          value: '2181'
+        - name: ZOOKEEPER_TIMEOUT
+          value: '5'
+        volumeMounts:
+        - name: host-time
+          readOnly: true
+          mountPath: /etc/localtime
+      # imagePullSecrets:
+      #   - name: #secret_name
+      restartPolicy: "Always"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: ecp-inference-safety-hat-det
+  namespace: ecp
+spec:
+  ports:
+  - name: ecp-inference-safety-hat-det-8018
+    port: 8018
+    protocol: TCP
+    targetPort: 8018
+    nodePort: 31111
+  selector:
+    inferjob: ecp-inference-safety-hat-det
+  type: NodePort

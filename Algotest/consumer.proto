@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+message task_info {
+  string taskId = 1;
+
+  enum image_type {
+    None = 0;
+    BINARY = 1;
+    BGR24 = 2;
+    URL = 3;
+    BASE64 = 4;
+  }
+
+  image_type type = 2;
+
+  message image_info {
+    string imageId = 1;
+    bytes data = 2;
+    int32 height = 3;
+    int32 width = 4;
+    int32 channelNum = 5;
+  }
+
+  repeated image_info image = 3;
+
+  message param_info {
+    string key = 1;
+    string value = 2;
+  }
+
+  repeated param_info param = 4;
+
+  string extra = 5;
+}

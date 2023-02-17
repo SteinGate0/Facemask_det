@@ -1,0 +1,54 @@
+FROM 10.110.63.67/iai/pytorch:1.6.0-runtime
+RUN sed -i "s@http://deb.debian.org/debian@http://10.110.63.27/repository/debian-proxy@g" /etc/apt/sources.list \
+  && sed -i "s@http://security.debian.org/debian-security@http://10.110.63.27/repository/debian-security@g" /etc/apt/sources.list
+
+MAINTAINER zhuhd  zhuhaodong@inspur.com
+
+RUN apt-get update \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/
+
+RUN python3 -m pip install --upgrade --no-cache-dir -i https://pypi.doubanio.com/simple/ \
+    opencv-python \
+    matplotlib \
+    scipy \
+    fastapi\
+    uvicorn\
+    gsutil
+
+RUN python3 -m pip install --upgrade --no-cache-dir --ignore-installed PyYAML -i https://pypi.doubanio.com/simple/ \
+    urllib3==1.24 \
+    pyyaml \
+    tqdm \
+    kazoo \
+    minio \
+    redis \
+    pika \
+    aiofiles
+
+RUN python3 -m pip install --upgrade --no-cache-dir --ignore-installed PyYAML -i https://pypi.doubanio.com/simple/ \
+    opencv-python \
+    opencv-contrib-python \
+    opencv-python-headless
+
+RUN python3 -m pip install --upgrade --no-cache-dir --ignore-installed PyYAML -i https://pypi.doubanio.com/simple/ \
+    pip
+
+ENV USE_GPU True
+
+COPY . /project
+
+WORKDIR /project
+
+RUN cp /project/requests/protobuf/protoc_x86_64 /usr/bin/protoc                                \
+    && cd /project/requests/protobuf/protobuf-3.18.0/python && python3 setup.py install        \
+    && cp -r /opt/conda/lib/python3.7/site-packages/protobuf-3.18.0-py3.7.egg/google/protobuf/ \
+             /opt/conda/lib/python3.7/site-packages/google/                                    \
+    && rm -rf /project/requests
+
+RUN python -m compileall -b . \
+    && find -name "*.py" | xargs rm -rf \
+    && find -name "__pycache__" | xargs rm -rf
+
+EXPOSE 8018
+CMD ["python","/project/src/main.pyc"]
